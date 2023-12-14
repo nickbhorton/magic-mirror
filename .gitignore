@@ -1,0 +1,11 @@
+build
+.vscode
+out.ppm
+default_name.ppm
+images
+run.sh
+hw1c_imgs
+examples-1c/
+hw1d-samples/
+*.ppm
+textures
