@@ -1,0 +1,19 @@
+eye  0 0 12
+viewdir  0 0 -1
+updir  0 1 0 
+vfov 45
+imsize 512 512
+bkgcolor 1 0.7 0.77 1
+
+image_name t1_reflection_1.ppm
+
+reflections 4
+
+light 0 0 12 1 1 0.7 0.77
+
+materialcolor  0 0.3 0.23 1 1 1 0.5 0 0.5 100 1 100
+sphere -1 0 10 1
+
+texture rainbow-stripes.ppm
+materialcolor  1 0 0 1 1 1 0.5 0.2 0.3 100 1 1
+sphere 1 0 10 1
