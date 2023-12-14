@@ -10,21 +10,47 @@
 #include "Object.hpp"
 #include "Tree.h"
 
-class Scene {
-    public:
-        Scene();
+struct SceneSettings {
+    SceneSettings() :
+    background_color{},
+    max_number_of_reflections{3},
+    number_of_shadow_rays{1},
+    shadow_ray_variance{0.03}
+    {};
 
-        std::vector<Light> lights;
-        std::vector<vec3f> vertexs;
-        std::vector<vec3f> vertex_normals;
-        std::vector<vec3f> texture_coords;
-        std::vector<std::unique_ptr<Texture>> textures;
+    vec3f background_color;
+    unsigned int max_number_of_reflections;
+    unsigned int number_of_shadow_rays;
+    float shadow_ray_variance;
+};
 
-        std::vector<Object> objects;
-        std::vector<Triangle> triangles;
-        std::vector<Sphere> spheres;
+struct Scene {
+    Scene() :
+    lights{},
+    vertexs{},
+    vertex_normals{},
+    texture_coords{},
+    textures{},
+    objects{},
+    triangles{},
+    spheres{},
+    object_tree{},
+    settings{}
+    {};
+    
+    std::vector<Light> lights;
+    std::vector<vec3f> vertexs;
+    std::vector<vec3f> vertex_normals;
+    std::vector<vec3f> texture_coords;
+    std::vector<std::unique_ptr<Texture>> textures;
 
-        std::unique_ptr<TreeNode> object_tree;
+    std::vector<Object> objects;
+    std::vector<Triangle> triangles;
+    std::vector<Sphere> spheres;
+
+    std::unique_ptr<TreeNode> object_tree;
+
+    SceneSettings settings;
 };
 
 

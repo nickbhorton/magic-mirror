@@ -13,32 +13,52 @@
 #include "Scene.h"
 
 // Args that come in from command line
-struct ProgramArguments {
+struct CommandLineArguments {
     std::string input_file;
     std::string output_file;
     std::string relative_path_to_textures;
 };
 
-// Args that are parsed from the input file
-struct PPMFileArguments{
-    unsigned int width;
-    unsigned int height;
-    vec3f eye;
-    vec3f viewdir;
-    vec3f updir;
-    float vfov;
-    vec3f bkgcolor;
-    vec3f mtlcolor;
-    Scene scene;
-    unsigned int max_number_of_reflections;
-    unsigned int number_of_shadow_rays;
-    float shadow_ray_variance;
-    std::string image_name;
-    float camera_index_of_refraction;
+struct CameraSettings {
+    CameraSettings() :
+    position{},
+    view_direction{},
+    up_direction{},
+    index_of_refraction{}
+    {};
+
+    vec3f position;
+    vec3f view_direction;
+    vec3f up_direction;
+    float index_of_refraction;
 };
 
-ProgramArguments parse_cmd_args(int argc, char* argv[]);
-PPMFileArguments parse_input_file_args(std::string file_name, std::string relative_path_to_textures);
+struct ImageSettings {
+    ImageSettings() :
+    pixel_width{},
+    pixel_height{},
+    vertical_fov{},
+    name{}
+    {};
+
+    unsigned int pixel_width;
+    unsigned int pixel_height;
+    float vertical_fov;
+    std::string name;
+};
+
+// Args that are parsed from the input file
+struct Settings{
+    // Image related params
+    ImageSettings image;
+    // Camera related params
+    CameraSettings camera;
+    // Scene related params
+    Scene scene;
+};
+
+CommandLineArguments parse_cmd_args(int argc, char* argv[]);
+Settings parse_input_file_args(std::string file_name, std::string relative_path_to_textures);
 
 void usage(const char* program);
 

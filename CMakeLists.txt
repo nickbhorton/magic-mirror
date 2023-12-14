@@ -9,9 +9,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(lib)
+# add googletest directory
+add_subdirectory(ext/googletest)
 
+# include direectory from linearmath
+include_directories(ext/linearmath/include)
+
+add_subdirectory(lib)
+add_subdirectory(tests)
 add_executable(raytracer main.cpp)
 
-add_executable(vec_test lib/vec/vec_test.cpp)
 target_link_libraries(raytracer PUBLIC file_lib maths_lib solution_lib)

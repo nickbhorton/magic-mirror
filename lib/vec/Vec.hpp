@@ -47,9 +47,9 @@ template<typename T> class Vec<T, 3> {
 
         constexpr Vec& operator=(Vec<T, 3> const& copy_vector);
 
-        constexpr T length();
+        constexpr T length() const;
         
-        constexpr Vec<T, 3> normalize();
+        constexpr Vec<T, 3> normalize() const;
 };
 
 // Basic constructor 
@@ -113,13 +113,13 @@ inline constexpr Vec<T, 3>& Vec<T, 3>::operator=(Vec<T, 3> const& copy_vector)
 }
 
 template <typename T>
-inline constexpr T Vec<T, 3>::length()
+inline constexpr T Vec<T, 3>::length() const
 {
     return std::sqrt(x*x + y*y + z*z);
 }
 
 template <typename T>
-inline constexpr Vec<T, 3> Vec<T, 3>::normalize()
+inline constexpr Vec<T, 3> Vec<T, 3>::normalize() const
 {
     T l = length();
     if (l == (T)0){

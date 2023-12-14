@@ -1,47 +1,42 @@
 #include "View.hpp"
 
-inline bool print_debug_stuff = false;
+constexpr bool debug = false;
 
-View create_view(const PPMFileArguments& ppm_args){
+View create_view(const CameraSettings& camera_settings, const ImageSettings& image_settings){
+    // Constructing camera axis
+    const vec3f u = (camera_settings.view_direction | camera_settings.up_direction).normalize();
+    const vec3f v = (u | camera_settings.view_direction).normalize();
+    const vec3f n = camera_settings.view_direction.normalize();
+
+    // Calculating width and height of viewport
+    // 180 is the largest angle for width or height of viewing window
+    const float aspect_ratio = (float) image_settings.pixel_width / (float) image_settings.pixel_height;
+    // TODO: give these better names
+    constexpr float d = 5.0;
+    const float h = 2 * d * tan(((0.5) * image_settings.vertical_fov) * (PI / 180.0));
+    const float w = h * aspect_ratio;
+
     View view {};
-    vec3f viewing_direction = ppm_args.viewdir;
+    view.ul = camera_settings.position + (d * n) - ((w/2) * u) + ((h/2) * v);
+    view.ur = camera_settings.position + (d * n) + ((w/2) * u) + ((h/2) * v);
+    view.ll = camera_settings.position + (d * n) - ((w/2) * u) - ((h/2) * v);
+    view.lr = camera_settings.position + (d * n) + ((w/2) * u) - ((h/2) * v);
+    view.delta_h =  (float)(1.0 / (float)(image_settings.pixel_width - 0.999)) * (view.ur - view.ul);
+    view.delta_v  =  (float)(1.0 / (float)(image_settings.pixel_height - 0.999)) * (view.ll - view.ul);
 
-    vec3f u = (viewing_direction | ppm_args.updir);
-    u = u.normalize();
-    if (print_debug_stuff) std::cout << "\nu: " << u << "\n";
-    vec3f v = (u | viewing_direction);
-    v = v.normalize();
-    if (print_debug_stuff) std::cout << "v: " << v << "\n";
-    vec3f n = viewing_direction.normalize();
-    if (print_debug_stuff) std::cout << "n: " << n << "\n";
+    // TODO: improve debug messages
+    if constexpr (debug) {
+        std::cout << "\nu: " << u << "\n";
+        std::cout << "v: " << v << "\n";
+        std::cout << "n: " << n << "\n";
 
-    // 180 is max degrees for width or height of viewing window
-    float aspect_ratio = (float) ppm_args.width / (float) ppm_args.height;
-    float d = 5.0;
-    float h = 2 * d * tan(((0.5) * ppm_args.vfov) * (PI / 180.0));
-    float w = h * aspect_ratio;
+        std::cout << "h:" << h << "\n";
+        std::cout << "w:" << w << "\n";
 
-    if (print_debug_stuff) std::cout << "h:" << h << "\n";
-    if (print_debug_stuff) std::cout << "w:" << w << "\n";
-
-    vec3f ul = ppm_args.eye + (d * n) - ((w/2) * u) + ((h/2) * v);
-    vec3f ur = ppm_args.eye + (d * n) + ((w/2) * u) + ((h/2) * v);
-    vec3f ll = ppm_args.eye + (d * n) - ((w/2) * u) - ((h/2) * v);
-    vec3f lr = ppm_args.eye + (d * n) + ((w/2) * u) - ((h/2) * v);
-
-    if (print_debug_stuff) std::cout << "ul: " << ul << "\n";
-    if (print_debug_stuff) std::cout << "ur: " << ur << "\n";
-    if (print_debug_stuff) std::cout << "ll: " << ll << "\n";
-    if (print_debug_stuff) std::cout << "lr: " << lr << "\n";
-
-    vec3f delta_h =  (float)(1.0 / (float)(ppm_args.width - 0.999)) * (ur - ul);
-    vec3f delta_v =  (float)(1.0 / (float)(ppm_args.height - 0.999)) * (ll - ul);
-
-    view.ll = ll;
-    view.lr = lr;
-    view.ul = ul;
-    view.ur = ur;
-    view.delta_h = delta_h;
-    view.delta_v = delta_v;
+        std::cout << "ul: " << view.ul << "\n";
+        std::cout << "ur: " << view.ur << "\n";
+        std::cout << "ll: " << view.ll << "\n";
+        std::cout << "lr: " << view.lr << "\n";
+    }
     return view;
 }

@@ -31,7 +31,7 @@ int current_pixel_y = 0;
 int pixel_inquiry_x = -1;
 int pixel_inquiry_y = -1;
 
-vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int recursion_depth);
+vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursion_depth);
 
 void write_color_array_to_file(const std::string& image_file_name, const std::vector<rgb8col>& color_vector, int width, int height){
     std::fstream image_file;
@@ -58,27 +58,29 @@ void write_color_array_to_file(const std::string& image_file_name, const std::ve
     image_file.close();
 }
 
-void work_on_pixel_vector(std::vector<rgb8col>& pixel_vector, int start_index, int number_of_pixels_computed,
-    const PPMFileArguments& ppm_args,
+void work_on_pixel_vector(
+    std::vector<rgb8col>& pixel_vector, 
+    int start_index, 
+    int number_of_pixels_computed,
+    const Settings& settings,
     const View& view
     )
 {
     long clock_ticks = 0;
     for (int index = 0; index < number_of_pixels_computed; index++){
-        int y = (start_index + index) / ppm_args.width;
-        int x = (start_index + index) % ppm_args.width;
-        vec3f view_point = view.ul + ((float)x)*view.delta_h + ((float)y)*view.delta_v;
-        vec3f ray_dir = view_point - ppm_args.eye;
-        ray_dir = ray_dir.normalize();
+        const int y = (start_index + index) / settings.image.pixel_height;
+        const int x = (start_index + index) % settings.image.pixel_height;
+        const vec3f view_point = view.ul + ((float)x)*view.delta_h + ((float)y)*view.delta_v;
+        const vec3f ray_dir = (view_point - settings.camera.position).normalize();
         Ray ray {};
-        ray.origin = ppm_args.eye;
+        ray.origin = settings.camera.position;
         ray.direction = ray_dir;
         // std::cout << x << " " << y << ":\n";
         current_pixel_x = x;
         current_pixel_y = y;
         clock_t start, end {};
         start = clock();
-        pixel_vector[index] = to_color_rgb_255(get_color_from_scene(ppm_args, ray, 0));
+        pixel_vector[index] = to_color_rgb_255(get_color_from_scene(settings, ray, 0));
         end = clock();
         clock_ticks += end - start;
     }
@@ -86,42 +88,37 @@ void work_on_pixel_vector(std::vector<rgb8col>& pixel_vector, int start_index, i
 }
 
 int main(int argc, char* argv[]){
-    ProgramArguments prog_args = parse_cmd_args(argc, argv);
-    PPMFileArguments ppm_args = parse_input_file_args(prog_args.input_file, prog_args.relative_path_to_textures);
+    const auto arguments_from_command_line = parse_cmd_args(argc, argv);
+    auto settings = parse_input_file_args(arguments_from_command_line.input_file, arguments_from_command_line.relative_path_to_textures);
 
     // Construct BVH
-    clock_t start, end {};
-    start = clock();
-    ppm_args.scene.object_tree = get_trunk_node(ppm_args.scene.objects);
-    end = clock();
+    const clock_t start {};
+    settings.scene.object_tree = get_trunk_node(settings.scene.objects);
+    const clock_t end {};
     // std::cout << "tree construction ticks: " << end-start << "\n";
 
     // Calculate view
-    View v = create_view(ppm_args);
-    int num_of_pixels = ppm_args.width * ppm_args.height;
+    const View v = create_view(settings.camera, settings.image);
+    const int num_of_pixels = settings.image.pixel_width * settings.image.pixel_height;
 
-    // Construct vector to put colors in
     std::vector<rgb8col> pixel_arrays_vector;
     pixel_arrays_vector.resize(num_of_pixels);
 
     // Add pixels to vector
-    work_on_pixel_vector(pixel_arrays_vector, 0, num_of_pixels, ppm_args, v);
+    work_on_pixel_vector(pixel_arrays_vector, 0, num_of_pixels, settings, v);
 
     // Write vector to a file
     std::string image_file_name{};
-    if (ppm_args.image_name.size() > 0){
-        image_file_name = ppm_args.image_name;
+    if (settings.image.name.size() > 0){
+        image_file_name = settings.image.name;
     }
     else {
-        image_file_name = prog_args.output_file;
+        image_file_name = arguments_from_command_line.output_file;
     }
-    write_color_array_to_file(image_file_name, pixel_arrays_vector, ppm_args.width, ppm_args.height);
+    write_color_array_to_file(image_file_name, pixel_arrays_vector, settings.image.pixel_width, settings.image.pixel_height);
     return 0;
 }
 
-/**
- * currently turned off because not working with the refractions
-*/
 float get_in_shadow(const Scene& scene, const Ray &r, float distance_to_light){
     float shadow = 0;
     std::optional<Solution> sol = get_solution_from_tree(scene.object_tree, r, scene);
@@ -136,7 +133,7 @@ float get_in_shadow(const Scene& scene, const Ray &r, float distance_to_light){
 
 
 float get_num_rays_in_shadow(
-    const PPMFileArguments& ppm_args, 
+    const Settings& ppm_args, 
     const vec3f& intersection_point, 
     const Object& o, 
     const Light& light,
@@ -145,11 +142,11 @@ float get_num_rays_in_shadow(
 )
 {
     float num_rays_in_shadow = 0;
-    for (unsigned int shad_num = 0; shad_num < ppm_args.number_of_shadow_rays; shad_num++){                
+    for (unsigned int shad_num = 0; shad_num < ppm_args.scene.settings.number_of_shadow_rays; shad_num++){                
             vec3f l_pos = light.position;
-            l_pos.x += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.shadow_ray_variance;
-            l_pos.y += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.shadow_ray_variance;
-            l_pos.z += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.shadow_ray_variance;
+            l_pos.x += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
+            l_pos.y += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
+            l_pos.z += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
             Ray r = ray;
             r.origin = intersection_point;
             r.direction = (l_pos - intersection_point).normalize();
@@ -159,7 +156,7 @@ float get_num_rays_in_shadow(
 }
 
 vec3f get_local_illumination_color_f(
-    const PPMFileArguments& ppm_args,
+    const Settings& ppm_args,
     const Solution& s
 )
 {
@@ -187,7 +184,7 @@ vec3f get_local_illumination_color_f(
 
         float sum_rays_shadow_intensity = 0.0f;
         float direct_ray_shadow_intensity = get_in_shadow(ppm_args.scene, direct_ray, distance_to_light);
-        if (direct_ray_shadow_intensity > 0.001 && ppm_args.number_of_shadow_rays > 1){
+        if (direct_ray_shadow_intensity > 0.001 && ppm_args.scene.settings.number_of_shadow_rays > 1){
             sum_rays_shadow_intensity = get_num_rays_in_shadow(
                 ppm_args, s.get_position(), s.get_object_intersected(), 
                 ppm_args.scene.lights[i], direct_ray, distance_to_light);
@@ -204,8 +201,8 @@ vec3f get_local_illumination_color_f(
 
         float light_intensity = 1.0f;
         if (sum_rays_shadow_intensity){
-            float sum_rays_light_intensity = ppm_args.number_of_shadow_rays - sum_rays_shadow_intensity; 
-            light_intensity = ((float) sum_rays_light_intensity) / ((float) ppm_args.number_of_shadow_rays);
+            float sum_rays_light_intensity = ppm_args.scene.settings.number_of_shadow_rays - sum_rays_shadow_intensity; 
+            light_intensity = ((float) sum_rays_light_intensity) / ((float) ppm_args.scene.settings.number_of_shadow_rays);
         }
 
         vec3f current_diffuse_color;
@@ -237,7 +234,7 @@ vec3f get_local_illumination_color_f(
     
 }
 
-vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int recursion_depth){
+vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursion_depth){
     if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) {
         ++get_color_call_number;
         std::cout << "get_color() call number: " << get_color_call_number << " recursion depth: " << recursion_depth << "\n";
@@ -252,9 +249,9 @@ vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int
         }
         if (sol.value().object_intersected.mat.index_of_refraction > 1 && sol.value().object_intersected.mat.k_specular > 0.001){
             if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "reflect: \n";
-            if (recursion_depth <= ppm_args.max_number_of_reflections){
+            if (recursion_depth <= ppm_args.scene.settings.max_number_of_reflections){
                 // handling the index of refractions 
-                float ni = ppm_args.camera_index_of_refraction;
+                float ni = ppm_args.scene.settings.max_number_of_reflections;
                 float nt = sol.value().object_intersected.mat.index_of_refraction;
 
                 if (!sol.value().ray.spheres_inside.empty()){
@@ -280,9 +277,9 @@ vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int
         // Refraction addition
         if (sol.value().object_intersected.mat.opacity < 0.999){
             if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "refract: \n";
-            if (recursion_depth <= ppm_args.max_number_of_reflections){
+            if (recursion_depth <= ppm_args.scene.settings.max_number_of_reflections){
                 // handling the index of refractions 
-                float ni = ppm_args.camera_index_of_refraction;
+                float ni = ppm_args.camera.index_of_refraction;
                 float nt = sol.value().object_intersected.mat.index_of_refraction;
 
                 if (!sol.value().ray.spheres_inside.empty()){
@@ -294,7 +291,7 @@ vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int
                             nt = ppm_args.scene.objects.at(sol.value().ray.spheres_inside.top()).mat.index_of_refraction;
                         }
                         else {
-                            nt = ppm_args.camera_index_of_refraction;
+                            nt = ppm_args.camera.index_of_refraction;
                         }            
                     }
                     else {
@@ -328,7 +325,7 @@ vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int
             }
         }
             // terminate it number of reflections is too high
-        if (recursion_depth > ppm_args.max_number_of_reflections){
+        if (recursion_depth > ppm_args.scene.settings.max_number_of_reflections){
             if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) {
                 std::cout << "returned color '0s\n";
             }
@@ -344,6 +341,6 @@ vec3f get_color_from_scene(const PPMFileArguments& ppm_args, const Ray& ray, int
         }
     }
     if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "\tray ended in void\n";
-    return ppm_args.bkgcolor;
+    return ppm_args.scene.settings.background_color;
 }
 
