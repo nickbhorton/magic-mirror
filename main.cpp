@@ -30,7 +30,7 @@ int current_pixel_y = 0;
 int pixel_inquiry_x = -1;
 int pixel_inquiry_y = -1;
 
-vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursion_depth);
+vec3f get_color_from_scene(const Settings& settings, const Ray& ray, int recursion_depth);
 
 void write_color_array_to_file(const std::string& image_file_name, const std::vector<vec3u8>& color_vector, int width, int height){
     std::fstream image_file;
@@ -86,38 +86,6 @@ void work_on_pixel_vector(
     std::cout << "images construction time (micro sec): " << clock_ticks << "\n";
 }
 
-int main(int argc, char* argv[]){
-    const auto arguments_from_command_line = parse_cmd_args(argc, argv);
-    auto settings = parse_input_file_args(arguments_from_command_line.input_file, arguments_from_command_line.relative_path_to_textures);
-
-    // Construct BVH
-    const clock_t start {};
-    settings.scene.object_tree = get_trunk_node(settings.scene.objects);
-    const clock_t end {};
-    // std::cout << "tree construction ticks: " << end-start << "\n";
-
-    // Calculate view
-    const View v = create_view(settings.camera, settings.image);
-    const int num_of_pixels = settings.image.pixel_width * settings.image.pixel_height;
-
-    std::vector<vec3u8> pixel_arrays_vector;
-    pixel_arrays_vector.resize(num_of_pixels);
-
-    // Add pixels to vector
-    work_on_pixel_vector(pixel_arrays_vector, 0, num_of_pixels, settings, v);
-
-    // Write vector to a file
-    std::string image_file_name{};
-    if (settings.image.name.size() > 0){
-        image_file_name = settings.image.name;
-    }
-    else {
-        image_file_name = arguments_from_command_line.output_file;
-    }
-    write_color_array_to_file(image_file_name, pixel_arrays_vector, settings.image.pixel_width, settings.image.pixel_height);
-    return 0;
-}
-
 float get_in_shadow(const Scene& scene, const Ray &r, float distance_to_light){
     float shadow = 0;
     std::optional<Solution> sol = get_solution_from_tree(scene.object_tree, r, scene);
@@ -130,109 +98,95 @@ float get_in_shadow(const Scene& scene, const Ray &r, float distance_to_light){
     return shadow;
 }
 
-
 float get_num_rays_in_shadow(
-    const Settings& ppm_args, 
+    const Scene& scene, 
     const vec3f& intersection_point, 
-    const Object& o, 
-    const Light& light,
+    const vec3f& light_position,
     const Ray& ray, 
     float distance_to_light
 )
 {
     float num_rays_in_shadow = 0;
-    for (unsigned int shad_num = 0; shad_num < ppm_args.scene.settings.number_of_shadow_rays; shad_num++){                
-            vec3f l_pos = light.position;
-            l_pos.x += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
-            l_pos.y += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
-            l_pos.z += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * ppm_args.scene.settings.shadow_ray_variance;
+    for (unsigned int shad_num = 0; shad_num < scene.settings.number_of_shadow_rays; shad_num++){                
+            vec3f l_pos = light_position;
+            l_pos.x += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
+            l_pos.y += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
+            l_pos.z += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
             Ray r = ray;
             r.origin = intersection_point;
             r.direction = (l_pos - intersection_point).normalize();
-            num_rays_in_shadow += get_in_shadow(ppm_args.scene, r, distance_to_light);
+            num_rays_in_shadow += get_in_shadow(scene, r, distance_to_light);
     }
     return num_rays_in_shadow;
 }
 
-vec3f get_local_illumination_color_f(
-    const Settings& ppm_args,
-    const Solution& s
-)
+vec3f get_local_illumination_color(const Scene& scene,const Solution& s)
 {
     vec3f total_color {};
-    vec3f texture_color {};
-    if (s.texture_coords_computed){
-        texture_color = ppm_args.scene.textures[s.get_object_intersected().texture_index]->get_color(s.get_tex_u(), s.get_tex_v());
-    }
-    for (unsigned int i = 0; i < ppm_args.scene.lights.size(); i++){
+    // Either gets color from objects texture or material
+    const vec3f& material_color = s.texture_coords_computed ? 
+        scene.textures[s.get_object_intersected().texture_index]->get_color(s.get_tex_u(), s.get_tex_v()) :
+        s.get_object_intersected().mat.color_intrinsic;
+
+    for (unsigned int i = 0; i < scene.lights.size(); i++){
         Ray direct_ray = s.ray;
         float distance_to_light {};
 
-        if (ppm_args.scene.lights[i].point_light){
-            vec3f dir = (ppm_args.scene.lights[i].position - s.get_position());
+        if (scene.lights[i].point_light){
+            vec3f dir = (scene.lights[i].position - s.get_position());
             direct_ray.direction = dir.normalize();
             direct_ray.origin = s.position;
             distance_to_light = dir.length();
         }
         else {
-            direct_ray.direction = (-ppm_args.scene.lights[i].position).normalize();
+            direct_ray.direction = (-scene.lights[i].position).normalize();
             direct_ray.origin = s.position;
             distance_to_light = MAX_FLOAT;
         }
         vec3f L = direct_ray.direction;
 
         float sum_rays_shadow_intensity = 0.0f;
-        float direct_ray_shadow_intensity = get_in_shadow(ppm_args.scene, direct_ray, distance_to_light);
-        if (direct_ray_shadow_intensity > 0.001 && ppm_args.scene.settings.number_of_shadow_rays > 1){
+        const float direct_ray_shadow_intensity = get_in_shadow(scene, direct_ray, distance_to_light);
+        if (direct_ray_shadow_intensity > 0.001 && scene.settings.number_of_shadow_rays > 1){
             sum_rays_shadow_intensity = get_num_rays_in_shadow(
-                ppm_args, s.get_position(), s.get_object_intersected(), 
-                ppm_args.scene.lights[i], direct_ray, distance_to_light);
+                scene, 
+                s.get_position(), 
+                scene.lights[i].position, 
+                direct_ray, 
+                distance_to_light
+            );
         }
         else if (direct_ray_shadow_intensity > 0.001){
             sum_rays_shadow_intensity = direct_ray_shadow_intensity;
         }
 
         // Assumption: Should already be normalized!
-        vec3f N = s.get_normal();
-        vec3f V = s.get_direction_to_ray_origin();
-        V = V.normalize();
-        vec3f H = (L + V).normalize();
+        const vec3f& N = s.get_normal();
+        const vec3f& V = (s.get_direction_to_ray_origin()).normalize();
+        const vec3f& H = (L + V).normalize();
 
-        float light_intensity = 1.0f;
+        float light_intensity {1.0f};
         if (sum_rays_shadow_intensity){
-            float sum_rays_light_intensity = ppm_args.scene.settings.number_of_shadow_rays - sum_rays_shadow_intensity; 
-            light_intensity = ((float) sum_rays_light_intensity) / ((float) ppm_args.scene.settings.number_of_shadow_rays);
+            float sum_rays_light_intensity = scene.settings.number_of_shadow_rays - sum_rays_shadow_intensity; 
+            light_intensity = ((float) sum_rays_light_intensity) / ((float) scene.settings.number_of_shadow_rays);
         }
 
-        vec3f current_diffuse_color;
-        vec3f current_specular_color;
-        if (s.texture_coords_computed){
-            current_diffuse_color = light_intensity * s.get_object_intersected().mat.k_diffuse * std::max(0.0f, (N & L)) * texture_color;
-            current_specular_color = light_intensity * s.get_object_intersected().mat.k_specular * ((float)pow(std::max(0.0f, (N & H)), s.get_object_intersected().mat.n)) * s.get_object_intersected().mat.color_specular_reflection;
-            total_color = total_color + ((ppm_args.scene.lights[i].color) * (current_diffuse_color + current_specular_color));
-        }
-        else {
-            current_diffuse_color = light_intensity * s.get_object_intersected().mat.k_diffuse * std::max(0.0f, (N & L)) * s.get_object_intersected().mat.color_intrinsic;
-            current_specular_color = light_intensity * s.get_object_intersected().mat.k_specular * ((float)pow(std::max(0.0f, (N & H)), s.get_object_intersected().mat.n)) * s.get_object_intersected().mat.color_specular_reflection;
-            total_color = total_color + ((ppm_args.scene.lights[i].color) * (current_diffuse_color + current_specular_color));
-        }
+        vec3f current_diffuse_color = light_intensity 
+                * s.get_object_intersected().mat.k_diffuse 
+                * std::max(0.0f, (N & L)) 
+                * material_color;
 
+        vec3f current_specular_color = light_intensity 
+            * s.get_object_intersected().mat.k_specular 
+            * ((float)pow(std::max(0.0f, (N & H)), s.get_object_intersected().mat.n)) 
+            * s.get_object_intersected().mat.color_specular_reflection;
+        total_color = total_color + ((scene.lights[i].color) * (current_diffuse_color + current_specular_color));
     }
-    if (s.texture_coords_computed){
-        vec3f final_color = 
-            s.get_object_intersected().mat.k_ambient * texture_color + 
-            total_color;
-        return final_color;
-    }
-    else {
-        vec3f final_color = 
-            s.get_object_intersected().mat.k_ambient * s.get_object_intersected().mat.color_intrinsic + 
-            total_color;
-        return final_color;
-    }
-    
+    return vec3f{s.get_object_intersected().mat.k_ambient * material_color + total_color};
 }
 
+// TODO: Rework this function for readability
+// This is the work horse of the whole engine.
 vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursion_depth){
     if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) {
         ++get_color_call_number;
@@ -240,7 +194,7 @@ vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursi
     }
     std::optional<Solution> sol = get_solution_from_tree(ppm_args.scene.object_tree, ray, ppm_args.scene);
     if (sol.has_value()){
-        vec3f local_illumination_color = get_local_illumination_color_f(ppm_args, sol.value());
+        vec3f local_illumination_color = get_local_illumination_color(ppm_args.scene, sol.value());
         // Reflection addition
         if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) {
             std::cout << "solution ray object intersection id: " << sol.value().ray.intersected_obj_id;
@@ -343,3 +297,31 @@ vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursi
     return ppm_args.scene.settings.background_color;
 }
 
+int main(int argc, char* argv[]){
+    const auto arguments_from_command_line = parse_cmd_args(argc, argv);
+    auto settings = parse_input_file_args(arguments_from_command_line.input_file, arguments_from_command_line.relative_path_to_textures);
+
+    // Construct BVH
+    settings.scene.object_tree = get_trunk_node(settings.scene.objects);
+    
+    // Calculate view
+    const View v = create_view(settings.camera, settings.image);
+    const int num_of_pixels = settings.image.pixel_width * settings.image.pixel_height;
+
+    std::vector<vec3u8> pixel_arrays_vector;
+    pixel_arrays_vector.resize(num_of_pixels);
+
+    // Add pixels to vector
+    work_on_pixel_vector(pixel_arrays_vector, 0, num_of_pixels, settings, v);
+
+    // Write vector to a file
+    std::string image_file_name{};
+    if (settings.image.name.size() > 0){
+        image_file_name = settings.image.name;
+    }
+    else {
+        image_file_name = arguments_from_command_line.output_file;
+    }
+    write_color_array_to_file(image_file_name, pixel_arrays_vector, settings.image.pixel_width, settings.image.pixel_height);
+    return 0;
+}
