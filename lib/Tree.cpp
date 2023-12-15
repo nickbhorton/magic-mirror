@@ -227,7 +227,7 @@ std::ostream &operator<<(std::ostream &os, const std::unique_ptr<TreeNode> &tn)
     if (tn->object.has_value() && tn->children.size() > 0) std::cout << "SOMETHING IS VERY WRONG\n";
     os << "node(" << tn->id << ") {";
     if (tn->object.has_value()){
-        os << "id:" << tn->object.value()->object_id << "";
+        os << "id:" << tn->object.value()->id << "";
     }
     if (tn->children.size() > 0){
         for (unsigned int i = 0; i < tn->children.size() - 1; i++){

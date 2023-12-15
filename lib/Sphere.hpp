@@ -9,15 +9,31 @@
 // id will store a unique number to speed up equivalence
 class Sphere{
     public:
-        Sphere();
-        void print_to_cout() const;
+        Sphere() :
+        position{},
+        radius{}
+        {};
 
         vec3f position;
         float radius;
 
-        vec3f get_min_point();
-        vec3f get_max_point();
+        inline vec3f get_max_point() const {
+            return vec3f{position.x + radius, position.y + radius, position.z + radius};
+        }
+
+        inline vec3f get_min_point() const {
+            return vec3f{position.x - radius, position.y - radius, position.z - radius};
+        }
+
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Sphere& s)
+{
+    os << "Sphere:\n";
+    os << "\tposition: " << s.position <<"\n";
+    os << "\tradius: " << s.radius << "\n";
+    return os;
+}
 
 namespace sphere {
     struct MinimumInformationForIntersection

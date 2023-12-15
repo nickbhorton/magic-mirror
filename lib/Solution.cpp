@@ -89,23 +89,23 @@ std::optional<Solution> solve_object(const Object& o, const Ray& r, const Scene&
 std::optional<Solution> solve_sphere(const Object& o, const Sphere& s, const Ray& r) {
     // If rays object of origination is the object we are solving
     // for... don't
-    if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "checking intersection with obj " << o.object_id << "\n";
+    if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "checking intersection with obj " << o.id << "\n";
     if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "object id contained in ray: " << r.intersected_obj_id << "\n";
     if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y && !r.spheres_inside.empty()) std::cout << "top of obj inside: " << r.spheres_inside.top() << "\n";
     
     bool inside_sphere = false;
-    if (!r.spheres_inside.empty() && o.object_id == r.spheres_inside.top()) {
+    if (!r.spheres_inside.empty() && o.id == r.spheres_inside.top()) {
         inside_sphere = true;
         if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "inside sphere!\n";
     }
-    if (!inside_sphere && r.intersected_obj_id == o.object_id) {return {};}
+    if (!inside_sphere && r.intersected_obj_id == o.id) {return {};}
     auto intersection_info = intersect(s, r);
     if (!intersection_info.has_value()){return {};}
 
     Solution sol {};
     sol.object_intersected = o;
     sol.ray = r;
-    sol.ray.intersected_obj_id = o.object_id;
+    sol.ray.intersected_obj_id = o.id;
     // makes sure that the smallest t is at position 1 in the ts vector 
     if (intersection_info.value().t1 >= 0.0f && intersection_info.value().t2 >= 0.0f){
         if (intersection_info.value().t1 < intersection_info.value().t2){
@@ -149,7 +149,7 @@ std::optional<Solution> solve_sphere(const Object& o, const Sphere& s, const Ray
 std::optional<Solution> solve_triangle(const Object& o, const Triangle& t, const Ray& r) {
     // If rays object of origination is the object we are solving
     // for... don't
-    if (r.intersected_obj_id == o.object_id) {return{};}
+    if (r.intersected_obj_id == o.id) {return{};}
     
     auto intersection_info = intersect(t, r);
     if (!intersection_info.has_value()){return {};}
@@ -158,7 +158,7 @@ std::optional<Solution> solve_triangle(const Object& o, const Triangle& t, const
     sol.ts.push_back(intersection_info.value().t_val);
     sol.object_intersected = o;
     sol.ray = r;
-    sol.ray.intersected_obj_id = o.object_id;
+    sol.ray.intersected_obj_id = o.id;
     sol.position = sol.ray.origin + (sol.get_smallest_t() * sol.ray.direction);
     if (t.has_normals){
         sol.normal = ((intersection_info.value().alpha * t.n0) + (intersection_info.value().beta * t.n1) + (intersection_info.value().gamma * t.n2)).normalize();

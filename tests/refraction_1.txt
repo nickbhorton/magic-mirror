@@ -2,8 +2,8 @@ eye  0 0 24
 viewdir  0 0 -1
 updir  0 1 0 
 vfov 28
-imsize 1500 1002
-bkgcolor 1 1 1 1.5
+imsize 750 500
+bkgcolor 1 1 1 1
 
 image_name t3_refraction.ppm
 
@@ -11,7 +11,7 @@ reflections 10
 
 light 3 4 10 1 1 0.7 0.77
 
-materialcolor  0 1 1 1 1 1 0.02 0.05 0.8 100 0 1
+materialcolor  0 1 1 1 1 1 0.02 0.05 0.8 20 0 1.5
 sphere 0 0 15 2
 #materialcolor  1 0 0 1 1 1 0.02 0.05 0.8 100 0 1
 #sphere -0.5 -0.5 15 0.4

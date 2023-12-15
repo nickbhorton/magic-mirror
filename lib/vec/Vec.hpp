@@ -204,4 +204,24 @@ inline constexpr bool operator==(const Vec<T, 3>& vec1, const Vec<T, 3>& vec2)
 // Short hand type definitions
 typedef Vec<float, 3> vec3f;
 
-typedef Vec<uint8_t, 3> rgb8col;
+typedef Vec<uint8_t, 3> vec3u8;
+
+static constexpr uint8_t span_u8(const float& f) {
+    if (f > 1.0f){
+        return 255;
+    }
+    else if (f < 0.0f){
+        return 0;
+    }
+    else {
+        return static_cast<uint8_t>(f * 255);
+    }
+}
+
+inline vec3u8 to_vec3u8(const vec3f& color){
+    return vec3u8{span_u8(color.x), span_u8(color.y), span_u8(color.z)};
+}
+
+inline vec3f to_vec3f(vec3u8 col){
+    return vec3f(((float)col.x / 255.0f), ((float)col.y / 255.0f), ((float)col.z / 255.0f));
+}

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "vec/Vec.hpp"
-#include "color_math.hpp"
 
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 class Texture {
     public:
@@ -19,5 +19,5 @@ class Texture {
     private:
         int width;
         int height;
-        std::unique_ptr<std::vector<rgb8col>> color_array;
+        std::unique_ptr<std::vector<vec3u8>> color_array;
 };

@@ -8,7 +8,6 @@
 
 #include "lib/file.hpp"
 #include "lib/maths.hpp"
-#include "lib/color_math.hpp"
 #include "lib/View.hpp"
 #include "lib/Object.hpp"
 #include "lib/Tree.h"
@@ -33,7 +32,7 @@ int pixel_inquiry_y = -1;
 
 vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursion_depth);
 
-void write_color_array_to_file(const std::string& image_file_name, const std::vector<rgb8col>& color_vector, int width, int height){
+void write_color_array_to_file(const std::string& image_file_name, const std::vector<vec3u8>& color_vector, int width, int height){
     std::fstream image_file;
     image_file.open(image_file_name, std::ios::out);
 
@@ -59,7 +58,7 @@ void write_color_array_to_file(const std::string& image_file_name, const std::ve
 }
 
 void work_on_pixel_vector(
-    std::vector<rgb8col>& pixel_vector, 
+    std::vector<vec3u8>& pixel_vector, 
     int start_index, 
     int number_of_pixels_computed,
     const Settings& settings,
@@ -68,8 +67,8 @@ void work_on_pixel_vector(
 {
     long clock_ticks = 0;
     for (int index = 0; index < number_of_pixels_computed; index++){
-        const int y = (start_index + index) / settings.image.pixel_height;
-        const int x = (start_index + index) % settings.image.pixel_height;
+        const int y = (start_index + index) / settings.image.pixel_width;
+        const int x = (start_index + index) % settings.image.pixel_width;
         const vec3f view_point = view.ul + ((float)x)*view.delta_h + ((float)y)*view.delta_v;
         const vec3f ray_dir = (view_point - settings.camera.position).normalize();
         Ray ray {};
@@ -80,7 +79,7 @@ void work_on_pixel_vector(
         current_pixel_y = y;
         clock_t start, end {};
         start = clock();
-        pixel_vector[index] = to_color_rgb_255(get_color_from_scene(settings, ray, 0));
+        pixel_vector[index] = to_vec3u8(get_color_from_scene(settings, ray, 0));
         end = clock();
         clock_ticks += end - start;
     }
@@ -101,7 +100,7 @@ int main(int argc, char* argv[]){
     const View v = create_view(settings.camera, settings.image);
     const int num_of_pixels = settings.image.pixel_width * settings.image.pixel_height;
 
-    std::vector<rgb8col> pixel_arrays_vector;
+    std::vector<vec3u8> pixel_arrays_vector;
     pixel_arrays_vector.resize(num_of_pixels);
 
     // Add pixels to vector
@@ -284,7 +283,7 @@ vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursi
 
                 if (!sol.value().ray.spheres_inside.empty()){
                     ni = ppm_args.scene.objects.at(sol.value().ray.spheres_inside.top()).mat.index_of_refraction;
-                    if (sol.value().object_intersected.object_id == sol.value().ray.spheres_inside.top()){
+                    if (sol.value().object_intersected.id == sol.value().ray.spheres_inside.top()){
                         sol.value().ray.spheres_inside.pop();
                         if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "pop!\n";
                         if (!sol.value().ray.spheres_inside.empty()){
@@ -295,11 +294,11 @@ vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursi
                         }            
                     }
                     else {
-                        sol.value().ray.spheres_inside.push(sol.value().object_intersected.object_id);
+                        sol.value().ray.spheres_inside.push(sol.value().object_intersected.id);
                     }
                 }
                 else if (sol.value().ray.spheres_inside.empty()){
-                    sol.value().ray.spheres_inside.push(sol.value().object_intersected.object_id);
+                    sol.value().ray.spheres_inside.push(sol.value().object_intersected.id);
                 }
                 if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "ni: " << ni << "\n";
                 if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "nt: " << nt << "\n";

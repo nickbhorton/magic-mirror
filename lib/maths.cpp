@@ -5,8 +5,6 @@ extern int current_pixel_y;
 extern int pixel_inquiry_x;
 extern int pixel_inquiry_y;
 
-
-
 static float get_fresnel_naught(float ni, float nt){
     return pow((nt-ni)/(nt+ni),2);
 }
