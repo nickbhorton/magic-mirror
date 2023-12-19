@@ -48,9 +48,9 @@ void write_color_array_to_file(const std::string& image_file_name, const std::ve
         }
         else {
             image_file 
-            << (int) color_vector[i].get(0) << " "
-            << (int) color_vector[i].get(1) << " "
-            << (int) color_vector[i].get(2) << "\n";
+            << (int) color_vector[i].x() << " "
+            << (int) color_vector[i].y() << " "
+            << (int) color_vector[i].z() << "\n";
         }
 
     }
@@ -180,9 +180,9 @@ vec3f get_local_illumination_color(const Scene& scene,const Solution& s)
             * s.get_object_intersected().mat.k_specular 
             * ((float)pow(std::max(0.0f, vec::dot(N, H)), s.get_object_intersected().mat.n)) 
             * s.get_object_intersected().mat.color_specular_reflection;
-        total_color[0] = total_color[0] + ((scene.lights[i].color.get(0)) * (current_diffuse_color + current_specular_color)[0]);
-        total_color[1] = total_color[1] + ((scene.lights[i].color.get(1)) * (current_diffuse_color + current_specular_color)[1]);
-        total_color[2] = total_color[2] + ((scene.lights[i].color.get(2)) * (current_diffuse_color + current_specular_color)[2]);
+        total_color[0] = total_color.x() + ((scene.lights[i].color.x()) * (current_diffuse_color + current_specular_color).x());
+        total_color[1] = total_color.y() + ((scene.lights[i].color.y()) * (current_diffuse_color + current_specular_color).y());
+        total_color[2] = total_color.z() + ((scene.lights[i].color.z()) * (current_diffuse_color + current_specular_color).z());
     }
     return vec3f{s.get_object_intersected().mat.k_ambient * material_color + total_color};
 }
