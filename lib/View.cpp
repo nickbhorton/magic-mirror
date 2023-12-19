@@ -1,12 +1,13 @@
 #include "View.hpp"
 
 constexpr bool debug = false;
+constexpr float PI = 3.14159265359;
 
 View create_view(const CameraSettings& camera_settings, const ImageSettings& image_settings){
     // Constructing camera axis
-    const vec3f u = (camera_settings.view_direction | camera_settings.up_direction).normalize();
-    const vec3f v = (u | camera_settings.view_direction).normalize();
-    const vec3f n = camera_settings.view_direction.normalize();
+    const vec3f u = vec::normalize(vec::cross(camera_settings.view_direction, camera_settings.up_direction));
+    const vec3f v = vec::normalize(vec::cross(u, camera_settings.view_direction));
+    const vec3f n = vec::normalize(camera_settings.view_direction);
 
     // Calculating width and height of viewport
     // 180 is the largest angle for width or height of viewing window

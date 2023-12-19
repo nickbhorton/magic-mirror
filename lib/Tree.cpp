@@ -42,23 +42,23 @@ void TreeNode::add_node(std::unique_ptr<TreeNode> tn)
     vec3f tn_min_point = tn->min_point;
     children.emplace_back(std::move(tn)); // This move the funkin vector
     if (children.size() > 1){
-        if (tn_max_point.x > max_point.x){
-            max_point.x = tn_max_point.x;
+        if (tn_max_point.get(0) > max_point.get(0)){
+            max_point[0] = tn_max_point.get(0);
         }
-        if (tn_max_point.y > max_point.y){
-            max_point.y = tn_max_point.y;
+        if (tn_max_point.get(1) > max_point.get(1)){
+            max_point[1] = tn_max_point.get(1);
         }
-        if (tn_max_point.z > max_point.z){
-            max_point.z = tn_max_point.z;
+        if (tn_max_point.get(2) > max_point.get(2)){
+            max_point[2] = tn_max_point.get(2);
         }
-        if (tn_min_point.x < min_point.x){
-            min_point.x = tn_min_point.x;
+        if (tn_min_point.get(0) < min_point.get(0)){
+            min_point[0] = tn_min_point.get(0);
         }
-        if (tn_min_point.y < min_point.y){
-            min_point.y = tn_min_point.y;
+        if (tn_min_point.get(1) < min_point.get(1)){
+            min_point[1] = tn_min_point.get(1);
         }
-        if (tn_min_point.z < min_point.z){
-            min_point.z = tn_min_point.z;
+        if (tn_min_point.get(2) < min_point.get(2)){
+            min_point[2] = tn_min_point.get(2);
         }
     }
     else {
@@ -81,17 +81,17 @@ void TreeNode::set_object(const Object& object_to_be_added)
 
 float TreeNode::cost_function()
 {
-    float l = std::abs(max_point.z - min_point.z);
-    float w = std::abs(max_point.x - min_point.x);
-    float h = std::abs(max_point.y - min_point.y);
+    float l = std::abs(max_point.get(2) - min_point.get(2));
+    float w = std::abs(max_point.get(0) - min_point.get(0));
+    float h = std::abs(max_point.get(1) - min_point.get(1));
     return 2*l*w + 2*w*h + 2*l*h;
 }
 
 float cost_function(const std::unique_ptr<TreeNode>& tn1, const std::unique_ptr<TreeNode>& tn2)
 {
-    float l = std::abs(std::max(tn1->max_point.z, tn2->max_point.z) - std::min(tn1->min_point.z, tn2->min_point.z));
-    float w = std::abs(std::max(tn1->max_point.x, tn2->max_point.x) - std::min(tn1->min_point.x, tn2->min_point.x));
-    float h = std::abs(std::max(tn1->max_point.y, tn2->max_point.y) - std::min(tn1->min_point.y, tn2->min_point.y));
+    float l = std::abs(std::max(tn1->max_point.get(2), tn2->max_point.get(2)) - std::min(tn1->min_point.get(2), tn2->min_point.get(2)));
+    float w = std::abs(std::max(tn1->max_point.get(0), tn2->max_point.get(0)) - std::min(tn1->min_point.get(0), tn2->min_point.get(0)));
+    float h = std::abs(std::max(tn1->max_point.get(1), tn2->max_point.get(1)) - std::min(tn1->min_point.get(1), tn2->min_point.get(1)));
     return 2*l*w + 2*w*h + 2*l*h;
 }
 
@@ -188,13 +188,13 @@ bool intersect_node(const std::unique_ptr<TreeNode>& tn, const Ray& r)
     #endif
     // to make sure the denominator is not zero
     // float offset = 0.0001f;
-    float tmin = (tn->min_point.x - r.origin.x) / r.direction.x; 
-    float tmax = (tn->max_point.x - r.origin.x) / r.direction.x; 
+    float tmin = (tn->min_point.get(0) - r.origin.get(0)) / r.direction.get(0); 
+    float tmax = (tn->max_point.get(0) - r.origin.get(0)) / r.direction.get(0); 
  
     if (tmin > tmax) std::swap(tmin, tmax); 
  
-    float tymin = (tn->min_point.y - r.origin.y) / r.direction.y; 
-    float tymax = (tn->max_point.y - r.origin.y) / r.direction.y; 
+    float tymin = (tn->min_point.get(1) - r.origin.get(1)) / r.direction.get(1); 
+    float tymax = (tn->max_point.get(1) - r.origin.get(1)) / r.direction.get(1); 
  
     if (tymin > tymax) std::swap(tymin, tymax); 
  
@@ -207,8 +207,8 @@ bool intersect_node(const std::unique_ptr<TreeNode>& tn, const Ray& r)
     if (tymax < tmax) 
         tmax = tymax; 
  
-    float tzmin = (tn->min_point.z - r.origin.z) / r.direction.z; 
-    float tzmax = (tn->max_point.z - r.origin.z) / r.direction.z; 
+    float tzmin = (tn->min_point.get(2) - r.origin.get(2)) / r.direction.get(2); 
+    float tzmax = (tn->max_point.get(2) - r.origin.get(2)) / r.direction.get(2); 
     if (tzmin > tzmax) std::swap(tzmin, tzmax); 
  
     if ((tmin > tzmax) || (tzmin > tmax)) 

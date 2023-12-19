@@ -76,12 +76,12 @@ template<typename T> T get_arg_from_file(std::ifstream& file, std::string parame
     }
 }
 
-template <typename T, size_t N> Vec<T, 3> get_vec_from_file(std::ifstream& file, std::string vec_name, bool print = false){
+template <typename T, size_t N> ColVector<T, 3> get_vec_from_file(std::ifstream& file, std::string vec_name, bool print = false){
     T data_array[3];
     for (unsigned int i = 0; i < 3; i++){
         data_array[i] = get_arg_from_file<T>(file,"", false);
     }
-    Vec<T, 3> v = Vec<T, 3>(data_array[0], data_array[1], data_array[2]);
+    ColVector<T, 3> v = vec::create(data_array[0], data_array[1], data_array[2]);
     if (print) std::cout << vec_name << ": " << v << "\n";
     return v;
 }

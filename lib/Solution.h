@@ -1,7 +1,7 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Object.hpp"
 #include "Triangle.hpp"
 #include "Sphere.hpp"

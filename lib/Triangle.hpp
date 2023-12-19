@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Ray.hpp"
 
 #include <bits/stdc++.h>
@@ -23,11 +23,19 @@ class Triangle{
         vec3f t0, t1, t2;
 
         inline vec3f get_max_point() {
-            return vec3f{std::max(std::max(p0.x, p1.x), p2.x), std::max(std::max(p0.y, p1.y), p2.y), std::max(std::max(p0.z, p1.z), p2.z)};
+            return vec::create(
+                std::max(std::max(p0.get(0), p1.get(0)), p2.get(0)),
+                std::max(std::max(p0.get(1), p1.get(1)), p2.get(1)), 
+                std::max(std::max(p0.get(2), p1.get(2)), p2.get(2))
+            );
         }
 
         inline vec3f get_min_point() {
-            return vec3f{std::min(std::min(p0.x, p1.x), p2.x), std::min(std::min(p0.y, p1.y), p2.y), std::min(std::min(p0.z, p1.z), p2.z)};
+            return vec::create(
+                std::min(std::min(p0.get(0), p1.get(0)), p2.get(0)), 
+                std::min(std::min(p0.get(1), p1.get(1)), p2.get(1)), 
+                std::min(std::min(p0.get(2), p1.get(2)), p2.get(2))
+            );
         }
 };
 
@@ -43,9 +51,9 @@ inline std::ostream& operator<<(std::ostream& os, const Triangle& t)
         os << "\tn2: " << t.n2 << "\n";
     }
     if (t.has_texture){
-        os << "\tt0: " << t.t0.x << " " << t.t0.y << "\n";
-        os << "\tt1: " << t.t1.x << " " << t.t1.y << "\n";
-        os << "\tt2: " << t.t2.x << " " << t.t2.y << "\n";
+        os << "\tt0: " << t.t0.get(0) << " " << t.t0.get(1) << "\n";
+        os << "\tt1: " << t.t1.get(0) << " " << t.t1.get(1) << "\n";
+        os << "\tt2: " << t.t2.get(0) << " " << t.t2.get(1) << "\n";
     }
     return os;
 }

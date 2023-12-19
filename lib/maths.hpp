@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Object.hpp"
 #include "Ray.hpp"
 #include "Solution.h"

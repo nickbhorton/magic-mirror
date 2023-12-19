@@ -48,9 +48,9 @@ void write_color_array_to_file(const std::string& image_file_name, const std::ve
         }
         else {
             image_file 
-            << (int) color_vector[i].r << " "
-            << (int) color_vector[i].g << " "
-            << (int) color_vector[i].b << "\n";
+            << (int) color_vector[i].get(0) << " "
+            << (int) color_vector[i].get(1) << " "
+            << (int) color_vector[i].get(2) << "\n";
         }
 
     }
@@ -70,7 +70,7 @@ void work_on_pixel_vector(
         const int y = (start_index + index) / settings.image.pixel_width;
         const int x = (start_index + index) % settings.image.pixel_width;
         const vec3f view_point = view.ul + ((float)x)*view.delta_h + ((float)y)*view.delta_v;
-        const vec3f ray_dir = (view_point - settings.camera.position).normalize();
+        const vec3f ray_dir = vec::normalize(view_point - settings.camera.position);
         Ray ray {};
         ray.origin = settings.camera.position;
         ray.direction = ray_dir;
@@ -109,12 +109,12 @@ float get_num_rays_in_shadow(
     float num_rays_in_shadow = 0;
     for (unsigned int shad_num = 0; shad_num < scene.settings.number_of_shadow_rays; shad_num++){                
             vec3f l_pos = light_position;
-            l_pos.x += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
-            l_pos.y += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
-            l_pos.z += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
+            l_pos[0] += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
+            l_pos[1] += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
+            l_pos[2] += ((rand() / double(RAND_MAX))*2.0f - 1.0f) * scene.settings.shadow_ray_variance;
             Ray r = ray;
             r.origin = intersection_point;
-            r.direction = (l_pos - intersection_point).normalize();
+            r.direction = vec::normalize(l_pos - intersection_point);
             num_rays_in_shadow += get_in_shadow(scene, r, distance_to_light);
     }
     return num_rays_in_shadow;
@@ -134,12 +134,12 @@ vec3f get_local_illumination_color(const Scene& scene,const Solution& s)
 
         if (scene.lights[i].point_light){
             vec3f dir = (scene.lights[i].position - s.get_position());
-            direct_ray.direction = dir.normalize();
+            direct_ray.direction = vec::normalize(dir);
             direct_ray.origin = s.position;
-            distance_to_light = dir.length();
+            distance_to_light = vec::length(dir);
         }
         else {
-            direct_ray.direction = (-scene.lights[i].position).normalize();
+            direct_ray.direction = vec::normalize(-scene.lights[i].position);
             direct_ray.origin = s.position;
             distance_to_light = MAX_FLOAT;
         }
@@ -162,8 +162,8 @@ vec3f get_local_illumination_color(const Scene& scene,const Solution& s)
 
         // Assumption: Should already be normalized!
         const vec3f& N = s.get_normal();
-        const vec3f& V = (s.get_direction_to_ray_origin()).normalize();
-        const vec3f& H = (L + V).normalize();
+        const vec3f& V = vec::normalize(s.get_direction_to_ray_origin());
+        const vec3f& H = vec::normalize(L + V);
 
         float light_intensity {1.0f};
         if (sum_rays_shadow_intensity){
@@ -173,14 +173,16 @@ vec3f get_local_illumination_color(const Scene& scene,const Solution& s)
 
         vec3f current_diffuse_color = light_intensity 
                 * s.get_object_intersected().mat.k_diffuse 
-                * std::max(0.0f, (N & L)) 
+                * std::max(0.0f, vec::dot(N, L)) 
                 * material_color;
 
         vec3f current_specular_color = light_intensity 
             * s.get_object_intersected().mat.k_specular 
-            * ((float)pow(std::max(0.0f, (N & H)), s.get_object_intersected().mat.n)) 
+            * ((float)pow(std::max(0.0f, vec::dot(N, H)), s.get_object_intersected().mat.n)) 
             * s.get_object_intersected().mat.color_specular_reflection;
-        total_color = total_color + ((scene.lights[i].color) * (current_diffuse_color + current_specular_color));
+        total_color[0] = total_color[0] + ((scene.lights[i].color.get(0)) * (current_diffuse_color + current_specular_color)[0]);
+        total_color[1] = total_color[1] + ((scene.lights[i].color.get(1)) * (current_diffuse_color + current_specular_color)[1]);
+        total_color[2] = total_color[2] + ((scene.lights[i].color.get(2)) * (current_diffuse_color + current_specular_color)[2]);
     }
     return vec3f{s.get_object_intersected().mat.k_ambient * material_color + total_color};
 }
@@ -282,14 +284,14 @@ vec3f get_color_from_scene(const Settings& ppm_args, const Ray& ray, int recursi
             if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) {
                 std::cout << "returned color '0s\n";
             }
-            return vec3f(0, 0, 0);
+            return vec::create(0.f, 0.f, 0.f);
         }
         else {
             if (current_pixel_x == pixel_inquiry_x && current_pixel_y == pixel_inquiry_y) std::cout << "\treturned local illumination color\n";
-            return vec3f(
-                std::min(local_illumination_color.x, 1.0f),
-                std::min(local_illumination_color.y, 1.0f),
-                std::min(local_illumination_color.z, 1.0f)
+            return vec::create(
+                std::min(local_illumination_color.get(0), 1.0f),
+                std::min(local_illumination_color.get(1), 1.0f),
+                std::min(local_illumination_color.get(2), 1.0f)
             );
         }
     }

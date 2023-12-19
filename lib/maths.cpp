@@ -21,14 +21,14 @@ static float get_fresnel_naught(float ni, float nt){
  */
 float get_fresnel_reflectance(const vec3f& direction_of_ray_origin, const vec3f& normal, float ni, float nt){
     float F0 = get_fresnel_naught(ni, nt);
-    return F0 + (1.0f - F0) * std::pow(1 - std::abs((direction_of_ray_origin & normal)), 5);
+    return F0 + (1.0f - F0) * std::pow(1 - std::abs(vec::dot(direction_of_ray_origin, normal)), 5);
 }
 
 
 Ray get_reflected_ray(const Ray& incoming_ray, const vec3f& point_of_reflection, const vec3f& normal_vector){
     vec3f I = -incoming_ray.direction;
-    vec3f N = (normal_vector & I) > 0.0f ? normal_vector : -normal_vector;
-    float cos_theta = N & I;
+    vec3f N = vec::dot(normal_vector, I) > 0.0f ? normal_vector : -normal_vector;
+    float cos_theta = vec::dot(N, I);
     Ray outgoing_ray = incoming_ray;
     outgoing_ray.origin = point_of_reflection;
     outgoing_ray.direction = ((2.0f*cos_theta) * N) - I;
@@ -40,8 +40,8 @@ Ray get_refracted_ray(const Ray& incoming_ray, const vec3f& point_of_reflection,
     
     float n = ni/nt;
     vec3f I = -incoming_ray.direction;
-    vec3f N = (normal_vector & I) > 0.0f ? normal_vector : -normal_vector;
-    float cos_theta = (N & I);
+    vec3f N = vec::dot(normal_vector, I) > 0.0f ? normal_vector : -normal_vector;
+    float cos_theta = vec::dot(N, I);
     outgoing_ray.origin = point_of_reflection;
     float coeff = sqrt(1.0 - (pow(n,2) * (1.0 - pow(cos_theta, 2))));
     // If there is not solution to coeff

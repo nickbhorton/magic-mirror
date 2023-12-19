@@ -12,6 +12,8 @@ long total_clock_ticks_in_get_smallest_pos_sol = 0;
 long total_clock_ticks_in_queue_while_loop = 0;
 #endif
 
+constexpr float PI = 3.14159265359;
+
 static std::optional<Solution> get_smallest_positive_solution(Ray r, const Scene& scene, const std::vector<Object>& objects){
     std::optional<Solution> solution = {};
     for (unsigned int i = 0; i < objects.size(); i++){
@@ -134,8 +136,8 @@ std::optional<Solution> solve_sphere(const Object& o, const Sphere& s, const Ray
     sol.position = sol.ray.origin + (sol.get_smallest_t() * sol.ray.direction);
     sol.normal = (sol.position - s.position) / s.radius;
     if (o.texture_index >= 0){
-        sol.tex_u = (std::atan2(sol.normal.y, sol.normal.x) + 2*PI) / (2.0f * PI);
-        sol.tex_v = std::acos(sol.normal.z) / PI;
+        sol.tex_u = (std::atan2(sol.normal[1], sol.normal[0]) + 2*PI) / (2.0f * PI);
+        sol.tex_v = std::acos(sol.normal[2]) / PI;
         sol.texture_coords_computed = true;
     }
     else {
@@ -161,14 +163,14 @@ std::optional<Solution> solve_triangle(const Object& o, const Triangle& t, const
     sol.ray.intersected_obj_id = o.id;
     sol.position = sol.ray.origin + (sol.get_smallest_t() * sol.ray.direction);
     if (t.has_normals){
-        sol.normal = ((intersection_info.value().alpha * t.n0) + (intersection_info.value().beta * t.n1) + (intersection_info.value().gamma * t.n2)).normalize();
+        sol.normal = vec::normalize((intersection_info.value().alpha * t.n0) + (intersection_info.value().beta * t.n1) + (intersection_info.value().gamma * t.n2));
     }
     else {
-        sol.normal = ((sol.position - t.p0) | (t.p2-t.p0)).normalize();
+        sol.normal = vec::normalize(vec::cross((sol.position - t.p0), (t.p2-t.p0)));
     }
     if (o.texture_index >= 0){
-        sol.tex_u = intersection_info.value().alpha*t.t0.x + intersection_info.value().beta*t.t1.x + intersection_info.value().gamma*t.t2.x;
-        sol.tex_v = intersection_info.value().alpha*t.t0.y + intersection_info.value().beta*t.t1.y + intersection_info.value().gamma*t.t2.y;
+        sol.tex_u = intersection_info.value().alpha*t.t0.get(0) + intersection_info.value().beta*t.t1.get(0) + intersection_info.value().gamma*t.t2.get(0);
+        sol.tex_v = intersection_info.value().alpha*t.t0.get(1) + intersection_info.value().beta*t.t1.get(1) + intersection_info.value().gamma*t.t2.get(1);
         sol.texture_coords_computed = true;
     }
     else {

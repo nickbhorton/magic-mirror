@@ -162,9 +162,9 @@ Settings parse_input_file_args(std::string file_name, std::string relative_path)
                 settings.scene.vertex_normals.push_back(get_vec_from_file<float, 3>(input_file, "vertex normal"));
             }
             if (word == "vt"){
-                vec3f vt = vec3f();
-                vt.x = get_arg_from_file<float>(input_file, "texture u");
-                vt.y = get_arg_from_file<float>(input_file, "texture v");
+                vec3f vt {};
+                vt[0] = get_arg_from_file<float>(input_file, "texture u");
+                vt[1] = get_arg_from_file<float>(input_file, "texture v");
                 settings.scene.texture_coords.push_back(vt);
             }
             if (word == "f"){

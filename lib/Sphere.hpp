@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Ray.hpp"
 
 #include <vector>
@@ -18,11 +18,11 @@ class Sphere{
         float radius;
 
         inline vec3f get_max_point() const {
-            return vec3f{position.x + radius, position.y + radius, position.z + radius};
+            return vec::create(position.get(0) + radius, position.get(1) + radius, position.get(2) + radius);
         }
 
         inline vec3f get_min_point() const {
-            return vec3f{position.x - radius, position.y - radius, position.z - radius};
+            return vec::create(position.get(0) - radius, position.get(1) - radius, position.get(2) - radius);
         }
 
 };

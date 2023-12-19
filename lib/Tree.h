@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Object.hpp"
 #include "Ray.hpp"
 

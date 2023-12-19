@@ -27,7 +27,7 @@ Texture::Texture(const std::string& file_name) :
             file >> r;
             file >> g;
             file >> b;
-            color_array->push_back(vec3u8((uint8_t)r, (uint8_t)g, (uint8_t)b));
+            color_array->push_back(vec::create((uint8_t)r, (uint8_t)g, (uint8_t)b));
         }
     }
     else {

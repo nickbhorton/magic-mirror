@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "Light.hpp"
-#include "vec/Vec.hpp"
+#include "matrix.hpp"
 #include "Texture.hpp"
 #include "Triangle.hpp"
 #include "Sphere.hpp"
