@@ -53,10 +53,15 @@ typedef std::variant<
     LineTypes::Opacity
 > MaterialLineType;
 
-std::optional<MaterialLineType> parse_stripped_line(
+std::optional<MaterialLineType> parse_stripped_material_line(
     std::stringstream line, 
     const std::vector<std::pair<std::string, int>>& tokens_argument_number_map,
     int line_number
 );
+
+/**
+ * @brief Removes comments in the for of '# this is a comment'
+*/
+std::string strip(const std::string& string);
 
 #endif

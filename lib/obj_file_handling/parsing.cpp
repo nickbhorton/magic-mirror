@@ -13,6 +13,14 @@ inline float from_string(const std::string& string, int line_number, int arg_num
     return 0.0f;
 }
 
+std::string strip(const std::string& string) {
+    size_t comment_start_position = string.find_first_of('#');
+    if (comment_start_position == std::string::npos) {
+        return string;
+    }
+    return string.substr(0, comment_start_position);
+}
+
 static std::optional<MaterialLineType> strings_to_variant(const std::vector<std::string>& strings, int line_number){
         if (strings[0] == "newmtl") {
             return LineTypes::NewMaterial{
@@ -83,7 +91,7 @@ inline int at(const std::vector<std::pair<std::string, int>>& key_value_vector, 
     return 0;
 }
 
-std::optional<MaterialLineType> parse_stripped_line(
+std::optional<MaterialLineType> parse_stripped_material_line(
     std::stringstream line, 
     const std::vector<std::pair<std::string, int>>& tokens_argument_number_map,
     int line_number
