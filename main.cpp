@@ -6,11 +6,11 @@
 #include <bits/stdc++.h>
 #include <thread>
 
-#include "lib/file.hpp"
-#include "lib/maths.hpp"
-#include "lib/View.hpp"
-#include "lib/Object.hpp"
-#include "lib/Tree.h"
+#include "file.hpp"
+#include "maths.hpp"
+#include "View.hpp"
+#include "Object.hpp"
+#include "Tree.h"
 
 
 #ifdef DEBUG
