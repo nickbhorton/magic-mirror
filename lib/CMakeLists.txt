@@ -1,6 +1,4 @@
-add_library(parsing 
-    obj_file_handling/parsing.cpp
-)
+add_subdirectory(obj_file_handling)
 
 add_library(file_lib 
     file.cpp 

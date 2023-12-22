@@ -32,3 +32,7 @@ endmacro()
 package_add_test(material_file_parsing material_file_parsing.cpp)
 target_link_libraries(material_file_parsing parsing)
 target_include_directories(material_file_parsing PUBLIC ${CMAKE_SOURCE_DIR}/ext/linearmath/include)
+
+package_add_test(object_file_parsing object_file_parsing.cpp)
+target_link_libraries(object_file_parsing parsing)
+target_include_directories(object_file_parsing PUBLIC ${CMAKE_SOURCE_DIR}/ext/linearmath/include)

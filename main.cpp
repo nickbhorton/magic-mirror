@@ -2,7 +2,6 @@
 #include <fstream>
 #include <complex>
 #include <algorithm>
-#include <execution>
 #include <bits/stdc++.h>
 #include <thread>
 
