@@ -48,3 +48,39 @@ TEST(LEXING_OBJECT_FILES, usemtl_token){
     EXPECT_TRUE(std::holds_alternative<ObjectLineTypes::MaterialCall>(m.value()));
     EXPECT_EQ(std::get<ObjectLineTypes::MaterialCall>(m.value()).value, "Material");
 }
+
+TEST(LEXING_OBJECT_FILES, face_token_v_vt_vn){
+    auto m = parsing::parse_stripped_lines(std::stringstream("f 5/1/1 3/2/1 1/3/1"), object_token_map, parsing::object::strings_to_variant_object, 1);
+    EXPECT_TRUE(m.has_value());
+    EXPECT_TRUE(std::holds_alternative<ObjectLineTypes::FaceType>(m.value()));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v1, vec::create(5, 1, 1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v2, vec::create(3, 2, 1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v3, vec::create(1, 3, 1));
+}
+
+TEST(LEXING_OBJECT_FILES, face_token_v_vn){
+    auto m = parsing::parse_stripped_lines(std::stringstream("f 5//1 3//1 1//1"), object_token_map, parsing::object::strings_to_variant_object, 1);
+    EXPECT_TRUE(m.has_value());
+    EXPECT_TRUE(std::holds_alternative<ObjectLineTypes::FaceType>(m.value()));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v1, vec::create(5, -1, 1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v2, vec::create(3, -1, 1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v3, vec::create(1, -1, 1));
+}
+
+TEST(LEXING_OBJECT_FILES, face_token_v){
+    auto m = parsing::parse_stripped_lines(std::stringstream("f 5 3 1"), object_token_map, parsing::object::strings_to_variant_object, 1);
+    EXPECT_TRUE(m.has_value());
+    EXPECT_TRUE(std::holds_alternative<ObjectLineTypes::FaceType>(m.value()));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v1, vec::create(5, -1, -1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v2, vec::create(3, -1, -1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v3, vec::create(1, -1, -1));
+}
+
+TEST(LEXING_OBJECT_FILES, face_token_v_vt){
+    auto m = parsing::parse_stripped_lines(std::stringstream("f 5/1 3/2 1/3"), object_token_map, parsing::object::strings_to_variant_object, 1);
+    EXPECT_TRUE(m.has_value());
+    EXPECT_TRUE(std::holds_alternative<ObjectLineTypes::FaceType>(m.value()));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v1, vec::create(5, 1, -1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v2, vec::create(3, 2, -1));
+    EXPECT_EQ(std::get<ObjectLineTypes::FaceType>(m.value()).value.v3, vec::create(1, 3, -1));
+}

@@ -44,3 +44,50 @@ WavefrontMaterial::WavefrontMaterial(const std::string& mtl_file_path) :
         std::exit(EXIT_FAILURE);
     }
 }
+
+WavefrontObject::WavefrontObject(const std::string & obj_file_path) :
+    materials{std::make_unique<std::unordered_map<std::string, WavefrontMaterial>>()},
+    vertexes{std::make_unique<std::vector<vec3f>>()},
+    normals{std::make_unique<std::vector<vec3f>>()},
+    texture_coordinates{std::make_unique<std::vector<vec2f>>()},
+    smooth_shading{false} 
+{
+    std::ifstream f;
+    f.open(obj_file_path, std::ifstream::in);
+    if (!f.good()){
+        std::cerr << "File " << obj_file_path << " could not be found\n";
+    }
+    std::vector<std::string> lines = parsing::get_lines(f);
+    std::vector<ObjectToken> tokens = parsing::get_tokens(lines, parsing::object::strings_to_variant_object);
+    for (const auto& token : tokens) {
+        if (std::holds_alternative<ObjectLineTypes::Material>(token)){
+            materials.get()->insert(
+                std::pair<std::string, WavefrontMaterial>(
+                    std::get<ObjectLineTypes::Material>(token).value.name,
+                    std::get<ObjectLineTypes::Material>(token).value
+                )
+            );
+        }
+        else if (std::holds_alternative<ObjectLineTypes::ObjectName>(token)){
+            name = std::get<ObjectLineTypes::ObjectName>(token).value;
+        }
+        else if (std::holds_alternative<ObjectLineTypes::Vertex>(token)){
+            vertexes->push_back(std::get<ObjectLineTypes::Vertex>(token).value);
+        }
+        else if (std::holds_alternative<ObjectLineTypes::Normal>(token)){
+            normals->push_back(std::get<ObjectLineTypes::Normal>(token).value);
+        }
+        else if (std::holds_alternative<ObjectLineTypes::TextureCoord>(token)){
+            texture_coordinates->push_back(std::get<ObjectLineTypes::TextureCoord>(token).value);
+        }
+        else if (std::holds_alternative<ObjectLineTypes::SmoothShading>(token)){
+            smooth_shading = std::get<ObjectLineTypes::SmoothShading>(token).value;
+        }
+        else if (std::holds_alternative<ObjectLineTypes::MaterialCall>(token)){
+            
+        }
+        else if (std::holds_alternative<ObjectLineTypes::FaceType>(token)){
+            
+        }
+    }
+}

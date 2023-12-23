@@ -26,12 +26,15 @@ public:
 };
 
 class WavefrontObject {
-private:
-    std::unordered_map<std::string, WavefrontMaterial> materials;
+public:
+    WavefrontObject(const std::string& obj_file_path);
+
+    std::unique_ptr<std::unordered_map<std::string, WavefrontMaterial>> materials;
     std::unique_ptr<std::vector<vec3f>> vertexes;
     std::unique_ptr<std::vector<vec3f>> normals;
     std::unique_ptr<std::vector<vec2f>> texture_coordinates;
     bool smooth_shading;
+    std::string name;
 };
 
 
@@ -76,6 +79,12 @@ typedef std::variant<
     MaterialLineTypes::Opacity
 > MaterialToken;
 
+struct Face {
+    vec3i v1;
+    vec3i v2;
+    vec3i v3;
+};
+
 namespace ObjectLineTypes {
     struct Material {WavefrontMaterial value;};
     struct ObjectName {std::string value;};
@@ -84,8 +93,7 @@ namespace ObjectLineTypes {
     struct TextureCoord {vec2f value;};
     struct SmoothShading {bool value;};
     struct MaterialCall {std::string value;};
-    struct FaceToTriangle {Triangle value;};
-    struct FaceToQuad {std::pair<Triangle, Triangle> value;};
+    struct FaceType {Face value;};
 }
 
 typedef std::variant<
@@ -96,8 +104,7 @@ typedef std::variant<
     ObjectLineTypes::TextureCoord,
     ObjectLineTypes::SmoothShading,
     ObjectLineTypes::MaterialCall,
-    ObjectLineTypes::FaceToTriangle,
-    ObjectLineTypes::FaceToQuad
+    ObjectLineTypes::FaceType
 > ObjectToken;
 
 

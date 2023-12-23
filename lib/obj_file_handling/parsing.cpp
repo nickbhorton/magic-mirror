@@ -1,4 +1,5 @@
 #include "parsing.hpp"
+#include "Triangle.hpp"
 
 std::optional<MaterialToken> parsing::material::strings_to_variant_material(const std::vector<std::string>& strings, int line_number){
     if (strings[0] == "newmtl") {
@@ -51,6 +52,35 @@ std::optional<MaterialToken> parsing::material::strings_to_variant_material(cons
     return {};
 }
 
+// TODO: error handling
+inline vec3i get_vertex(const std::string & str) {
+    constexpr int none = -1;
+    int v = none;
+    int vt = none;
+    int vn = none;
+
+    std::cout << "STRING: " << str << "\n";
+    vec3i result = vec::create(v, vt, vn);
+    if (sscanf(str.c_str(), "%d/%d/%d", &v, &vt, &vn) == 3) {
+        std::cout << "%d/%d/%d IF STATEMENT" << "\n";
+        return vec::create(v, vt, vn);
+    }
+    else if (sscanf(str.c_str(), "%d//%d", &v, &vn) == 2) {
+        std::cout << "%d//%d IF STATEMENT" << "\n";
+        return vec::create(v, vt, vn);
+    }
+    else if (sscanf(str.c_str(), "%d/%d", &v, &vt) == 2) {
+        std::cout << "%d/%d IF STATEMENT" << "\n";
+        return vec::create(v, vt, vn);
+    }
+    else if (sscanf(str.c_str(), "%d", &v) == 1) {
+        std::cout << "%d IF STATEMENT" << "\n";
+        return vec::create(v, vt, vn);
+    }
+    std::cerr << "Error: vertex was not formatted correctly\n";
+    return result;
+}
+
 std::optional<ObjectToken> parsing::object::strings_to_variant_object(const std::vector<std::string>& strings, int line_number){
     if (strings[0] == "mtllib") {
         return ObjectLineTypes::Material{
@@ -97,18 +127,16 @@ std::optional<ObjectToken> parsing::object::strings_to_variant_object(const std:
             .value = strings[1]
         };
     }
-    // else if (strings[0] == "f") {
-    //     if (strings.size() == 4){
-    //         return ObjectLineTypes::FaceToTriangle{
-    //             .value = vec::create(a1, a2, a3)
-    //         };
-    //     }
-    //     if (strings.size() == 5){
-    //         return ObjectLineTypes::FaceToQuad{
-    //             .value = vec::create(a1, a2, a3)
-    //         };
-    //     }
-    // }
+    else if (strings[0] == "f") {
+        Face f = {
+            .v1 = get_vertex(strings[1]),
+            .v2 = get_vertex(strings[2]),
+            .v3 = get_vertex(strings[3])
+        };
+        return ObjectLineTypes::FaceType {
+            .value = f
+        };
+    }
     return {};
 }
 
